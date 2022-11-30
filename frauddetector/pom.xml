@@ -2,15 +2,17 @@
 		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<groupId>win.hgfdodo</groupId>
-	<artifactId>flink-demo</artifactId>
-	<version>0.1</version>
-	<packaging>pom</packaging>
-	<modules>
-		<module>frauddetector</module>
-	</modules>
+	<parent>
+		<groupId>win.hgfdodo</groupId>
+		<artifactId>flink-demo</artifactId>
+		<version>0.1</version>
+	</parent>
 
-	<name>Flink demo</name>
+	<groupId>win.hgfdodo</groupId>
+	<artifactId>frauddetection</artifactId>
+
+	<name>Flink Walkthrough DataStream Java</name>
+	<url>https://flink.apache.org</url>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
