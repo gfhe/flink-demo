@@ -20,7 +20,7 @@ COPY ./src /opt/data-producer/src
 COPY ./pom.xml /opt/data-producer/pom.xml
 
 RUN cd /opt/data-producer; \
-    mvn clean install
+    mvn clean install -Drat.skip=true
 
 FROM openjdk:8-jre
 

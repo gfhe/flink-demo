@@ -18,30 +18,33 @@
 
 package org.apache.flink.playground.datagen.model;
 
-import java.time.format.DateTimeFormatter;
-import java.util.Map;
-import org.apache.kafka.common.serialization.Serializer;
+import java.time.LocalDateTime;
 
-/** Serializes a {@link Transaction} into a CSV record. */
-public class TransactionSerializer implements Serializer<Transaction> {
+/**
+ * A simple financial transaction.
+ */
+public class StructuredData {
+    public String uuid;
 
-  private static final DateTimeFormatter formatter =
-      DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    public String wxGroupId;
 
-  @Override
-  public void configure(Map<String, ?> map, boolean b) {}
+    public String senderId;
 
-  @Override
-  public byte[] serialize(String s, Transaction transaction) {
-    String csv =
-        String.format(
-            // Avoiding spaces here to workaround FLINK-23073
-            "%s,%s,%s",
-            transaction.accountId, transaction.amount, transaction.timestamp.format(formatter));
+    public String sentence;
 
-    return csv.getBytes();
-  }
+    public String pictureUrl;
 
-  @Override
-  public void close() {}
+    public LocalDateTime timestamp;
+
+    @Override
+    public String toString() {
+        return "StructuredData{" +
+                "uuid='" + uuid + '\'' +
+                ", wxGroupId='" + wxGroupId + '\'' +
+                ", senderId='" + senderId + '\'' +
+                ", sentence='" + sentence + '\'' +
+                ", pictureUrl='" + pictureUrl + '\'' +
+                ", timestamp=" + timestamp +
+                '}';
+    }
 }
