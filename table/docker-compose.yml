@@ -19,7 +19,7 @@
 version: '2.1'
 services:
   jobmanager:
-    image: apache/flink-table-walkthrough:1-FLINK-1.15-scala_2.12
+    image: flink-process-structure-data:simple
     build: .
     hostname: "jobmanager"
     expose:
@@ -33,7 +33,7 @@ services:
       - kafka
       - mysql
   taskmanager:
-    image: apache/flink-table-walkthrough:1-FLINK-1.15-scala_2.12
+    image: flink-process-structure-data:simple
     build: .
     expose:
       - "6121"
@@ -62,7 +62,7 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_CREATE_TOPICS: "kafka:1:1"
   data-generator:
-      image: apache/data-generator:1
+      image: kafka-data-generator:demo
       build: ../docker/data-generator
       depends_on:
         - kafka

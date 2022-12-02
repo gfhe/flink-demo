@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.flink.playgrounds.spendreport;
+package org.apache.flink.playgrounds.structuredata;
 
 public class UnimplementedException extends RuntimeException {
 

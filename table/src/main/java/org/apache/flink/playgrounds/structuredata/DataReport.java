@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.flink.playgrounds.spendreport;
+package org.apache.flink.playgrounds.structuredata;
 
 import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.Table;
@@ -26,54 +26,57 @@ import org.apache.flink.table.expressions.TimeIntervalUnit;
 
 import static org.apache.flink.table.api.Expressions.*;
 
-public class SpendReport {
+public class DataReport {
 
-    public static Table report(Table transactions) {
-        return transactions.select(
-            $("account_id"),
-            $("transaction_time").floor(TimeIntervalUnit.HOUR).as("log_ts"),
-            $("amount"))
-        .groupBy($("account_id"), $("log_ts"))
-        .select(
-            $("account_id"),
-            $("log_ts"),
-            $("amount").sum().as("amount"));
+    public static Table report(Table wxGroupEvent) {
+        return wxGroupEvent.groupBy($("wxGroupId"), $("senderId"))
+                .select(
+                        $("wxGroupId").as("wx_group_id"),
+                        $("senderId").as("sender_id"),
+                        $("senderId").count().as("send_count") // count 聚合，发送次数
+                );
     }
 
     public static void main(String[] args) throws Exception {
         EnvironmentSettings settings = EnvironmentSettings.newInstance().build();
         TableEnvironment tEnv = TableEnvironment.create(settings);
 
-        tEnv.executeSql("CREATE TABLE transactions (\n" +
-                "    account_id  BIGINT,\n" +
-                "    amount      BIGINT,\n" +
-                "    transaction_time TIMESTAMP(3),\n" +
+        tEnv.executeSql("CREATE TABLE kafka_data_input (\n" +
+                "    uuid       STRING,\n" +
+                "    wxGroupId  STRING,\n" +
+                "    senderId   STRING,\n" +
+                "    sentence   STRING,\n" +
+                "    pictureUrl STRING,\n" +
+                "    timestamp  BIGINT,\n" +
                 "    WATERMARK FOR transaction_time AS transaction_time - INTERVAL '5' SECOND\n" +
                 ") WITH (\n" +
                 "    'connector' = 'kafka',\n" +
                 "    'topic'     = 'transactions',\n" +
                 "    'properties.bootstrap.servers' = 'kafka:9092',\n" +
                 "    'scan.startup.mode' = 'earliest-offset',\n" +
-                "    'format'    = 'csv'\n" +
+
+                "    'value.format'    = 'json',\n" +
+                "    'value.json.fail-on-missing-field' = 'true',\n" +
+                "    'value.fields-include' = 'ALL'\n" +
                 ")");
 
-        tEnv.executeSql("CREATE TABLE spend_report (\n" +
-                "    account_id BIGINT,\n" +
-                "    log_ts     TIMESTAMP(3),\n" +
-                "    amount     BIGINT\n," +
-                "    PRIMARY KEY (account_id, log_ts) NOT ENFORCED" +
+        tEnv.executeSql("CREATE TABLE wx_group_active_report (\n" +
+                "    wx_group_id    STRING,\n" +
+                "    sender_id      STRING,\n" +
+                "    send_count     BIGINT\n," +
+                "    PRIMARY KEY (wx_group_id, sender_id) NOT ENFORCED" +
                 ") WITH (\n" +
                 "  'connector'  = 'jdbc',\n" +
                 "  'url'        = 'jdbc:mysql://mysql:3306/sql-demo',\n" +
-                "  'table-name' = 'spend_report',\n" +
+                "  'table-name' = 'wx_group_report',\n" +
                 "  'driver'     = 'com.mysql.jdbc.Driver',\n" +
                 "  'username'   = 'sql-demo',\n" +
                 "  'password'   = 'demo-sql'\n" +
                 ")");
 
-        // from 输入表
-        Table transactions = tEnv.from("transactions");
+        // from 输入表, 表名
+        Table wxGroupEvent = tEnv.from("kafka_data_input");
         // report 处理输入的数据，然后执行插入到输出表
-        report(transactions).executeInsert("spend_report");
+        report(wxGroupEvent).executeInsert("wx_group_active_report");
     }
 }
