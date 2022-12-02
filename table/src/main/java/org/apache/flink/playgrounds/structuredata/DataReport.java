@@ -28,56 +28,60 @@ import static org.apache.flink.table.api.Expressions.*;
 
 public class DataReport {
 
-    public static Table report(Table wxGroupEvent) {
-        return wxGroupEvent.groupBy($("wxGroupId"), $("senderId"))
-                .select(
-                        $("wxGroupId").as("wx_group_id"),
-                        $("senderId").as("sender_id"),
-                        $("senderId").count().as("send_count") // count 聚合，发送次数
-                );
-    }
+  public static Table report(Table wxGroupEvent) {
+    return wxGroupEvent
+        .window(Tumble.over(lit(1).hour()).on("timestamp").as("send_time"))
+        .groupBy($("wxGroupId"), $("senderId"))
+        .select(
+            $("wxGroupId").as("wx_group_id"),
+            $("senderId").as("sender_id"),
+            $("send_time"),
+            $("senderId").count().as("send_count") // count 聚合，发送次数
+        );
+  }
 
-    public static void main(String[] args) throws Exception {
-        EnvironmentSettings settings = EnvironmentSettings.newInstance().build();
-        TableEnvironment tEnv = TableEnvironment.create(settings);
+  public static void main(String[] args) throws Exception {
+    EnvironmentSettings settings = EnvironmentSettings.newInstance().build();
+    TableEnvironment tEnv = TableEnvironment.create(settings);
 
-        tEnv.executeSql("CREATE TABLE kafka_data_input (\n" +
-                "    uuid       STRING,\n" +
-                "    wxGroupId  STRING,\n" +
-                "    senderId   STRING,\n" +
-                "    sentence   STRING,\n" +
-                "    pictureUrl STRING,\n" +
-                "    `timestamp`  BIGINT,\n" +
+    tEnv.executeSql("CREATE TABLE kafka_data_input (\n" +
+        "    uuid       STRING,\n" +
+        "    wxGroupId  STRING,\n" +
+        "    senderId   STRING,\n" +
+        "    sentence   STRING,\n" +
+        "    pictureUrl STRING,\n" +
+        "    `timestamp`  TIMESTAMP(3)\n" +
 //            水位处理消息延迟
 //                "    WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '5' SECOND\n" +
-                ") WITH (\n" +
-                "    'connector' = 'kafka',\n" +
-                "    'topic'     = 'transactions',\n" +
-                "    'properties.bootstrap.servers' = 'kafka:9092',\n" +
-                "    'scan.startup.mode' = 'earliest-offset',\n" +
+        ") WITH (\n" +
+        "    'connector' = 'kafka',\n" +
+        "    'topic'     = 'transactions',\n" +
+        "    'properties.bootstrap.servers' = 'kafka:9092',\n" +
+        "    'scan.startup.mode' = 'earliest-offset',\n" +
 
-                "    'value.format'    = 'json',\n" +
-                "    'value.json.fail-on-missing-field' = 'true',\n" +
-                "    'value.fields-include' = 'ALL'\n" +
-                ")");
+        "    'value.format'    = 'json',\n" +
+        "    'value.json.fail-on-missing-field' = 'true',\n" +
+        "    'value.fields-include' = 'ALL'\n" +
+        ")");
 
-        tEnv.executeSql("CREATE TABLE wx_group_active_report (\n" +
-                "    wx_group_id    STRING,\n" +
-                "    sender_id      STRING,\n" +
-                "    send_count     BIGINT\n," +
-                "    PRIMARY KEY (wx_group_id, sender_id) NOT ENFORCED" +
-                ") WITH (\n" +
-                "  'connector'  = 'jdbc',\n" +
-                "  'url'        = 'jdbc:mysql://mysql:3306/sql-demo',\n" +
-                "  'table-name' = 'wx_group_report',\n" +
-                "  'driver'     = 'com.mysql.jdbc.Driver',\n" +
-                "  'username'   = 'sql-demo',\n" +
-                "  'password'   = 'demo-sql'\n" +
-                ")");
+    tEnv.executeSql("CREATE TABLE wx_group_active_report (\n" +
+        "    wx_group_id    STRING,\n" +
+        "    sender_id      STRING,\n" +
+        "    send_time      TIMESTAMP(3),\n" +
+        "    send_count     BIGINT\n," +
+        "    PRIMARY KEY (wx_group_id, sender_id) NOT ENFORCED" +
+        ") WITH (\n" +
+        "  'connector'  = 'jdbc',\n" +
+        "  'url'        = 'jdbc:mysql://mysql:3306/sql-demo',\n" +
+        "  'table-name' = 'wx_group_report',\n" +
+        "  'driver'     = 'com.mysql.jdbc.Driver',\n" +
+        "  'username'   = 'sql-demo',\n" +
+        "  'password'   = 'demo-sql'\n" +
+        ")");
 
-        // from 输入表, 表名
-        Table wxGroupEvent = tEnv.from("kafka_data_input");
-        // report 处理输入的数据，然后执行插入到输出表
-        report(wxGroupEvent).executeInsert("wx_group_active_report");
-    }
+    // from 输入表, 表名
+    Table wxGroupEvent = tEnv.from("kafka_data_input");
+    // report 处理输入的数据，然后执行插入到输出表
+    report(wxGroupEvent).executeInsert("wx_group_active_report");
+  }
 }
