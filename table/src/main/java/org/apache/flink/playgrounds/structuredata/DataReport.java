@@ -31,7 +31,7 @@ public class DataReport {
   public static Table report(Table wxGroupEvent) {
     return wxGroupEvent
         .window(Tumble.over(lit(1).hour()).on("timestamp").as("send_time"))
-        .groupBy($("wxGroupId"), $("senderId"), $('senf_time'))
+        .groupBy($("wxGroupId"), $("senderId"), $("senf_time"))
         .select(
             $("wxGroupId").as("wx_group_id"),
             $("senderId").as("sender_id"),
