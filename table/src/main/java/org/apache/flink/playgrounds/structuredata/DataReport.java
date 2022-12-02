@@ -47,8 +47,9 @@ public class DataReport {
                 "    senderId   STRING,\n" +
                 "    sentence   STRING,\n" +
                 "    pictureUrl STRING,\n" +
-                "    timestamp  BIGINT,\n" +
-                "    WATERMARK FOR transaction_time AS transaction_time - INTERVAL '5' SECOND\n" +
+                "    `timestamp`  BIGINT,\n" +
+//            水位处理消息延迟
+//                "    WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '5' SECOND\n" +
                 ") WITH (\n" +
                 "    'connector' = 'kafka',\n" +
                 "    'topic'     = 'transactions',\n" +
