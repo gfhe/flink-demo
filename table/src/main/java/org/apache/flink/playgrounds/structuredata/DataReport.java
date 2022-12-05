@@ -35,7 +35,8 @@ public class DataReport {
         .select(
             $("wxGroupId").as("wx_group_id"),
             $("senderId").as("sender_id"),
-            $("send_time"),
+            $("send_time").start().as("send_time"), // 窗口输出需要选择一个明确的时刻
+//            $("send_time").end().as("send_time_end"), // 窗口输出需要选择一个明确的时刻
             $("senderId").count().as("send_count") // count 聚合，发送次数
         );
   }
