@@ -30,7 +30,7 @@ public class DataReport {
 
   public static Table report(Table wxGroupEvent) {
     return wxGroupEvent
-        .window(Tumble.over(lit(1).hour()).on("timestamp").as("send_time"))
+        .window(Tumble.over(lit(1).hour()).on("ts").as("send_time"))
         .groupBy($("wxGroupId"), $("senderId"), $("send_time"))
         .select(
             $("wxGroupId").as("wx_group_id"),
@@ -51,7 +51,8 @@ public class DataReport {
         "    senderId   STRING,\n" +
         "    sentence   STRING,\n" +
         "    pictureUrl STRING,\n" +
-        "    `timestamp`  TIMESTAMP(3)\n" +
+        "    `timestamp` BIGINT,\n" +
+        "    `ts`  AS TO_TIMESTAMP( FROM_UNIXTIME(`timestamp`) )\n" +
 //            水位处理消息延迟
 //                "    WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '5' SECOND\n" +
         ") WITH (\n" +
@@ -82,6 +83,7 @@ public class DataReport {
 
     // from 输入表, 表名
     Table wxGroupEvent = tEnv.from("kafka_data_input");
+    wxGroupEvent.execute().print();
     // report 处理输入的数据，然后执行插入到输出表
     report(wxGroupEvent).executeInsert("wx_group_active_report");
   }

@@ -116,7 +116,35 @@ public class DataReportTest {
     } catch (Exception e) {
       throw new RuntimeException("Failed to materialize results", e);
     }
+  }
 
+  @Test
+  public void tableAutoTimestampANdBigInt(){
+    EnvironmentSettings settings = EnvironmentSettings.newInstance().inBatchMode().build();
+    TableEnvironment tEnv = TableEnvironment.create(settings);
 
+    Table wxGroupEvent =
+        tEnv.fromValues(
+            DataTypes.ROW(
+                DataTypes.FIELD("uuid", DataTypes.STRING()),
+                DataTypes.FIELD("wxGroupId", DataTypes.STRING()),
+                DataTypes.FIELD("senderId", DataTypes.STRING()),
+//                                DataTypes.FIELD("sentence", DataTypes.STRING()),
+                DataTypes.FIELD("timestamp", DataTypes.BIGINT()) ),
+            Row.of("1", "1", "100", DATE_TIME.plusMinutes(12).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()),
+            Row.of("2", "1", "200", DATE_TIME.plusMinutes(47).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()),
+            Row.of("3", "1", "100", DATE_TIME.plusMinutes(36).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()),
+            Row.of("4", "1", "200", DATE_TIME.plusMinutes(3).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()),
+            Row.of("5", "1", "300", DATE_TIME.plusMinutes(8).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()),
+            Row.of("1", "2", "100", DATE_TIME.plusMinutes(53).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()),
+            Row.of("2", "2", "200", DATE_TIME.plusMinutes(32).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()),
+            Row.of("3", "2", "100", DATE_TIME.plusMinutes(31).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()),
+            Row.of("4", "2", "300", DATE_TIME.plusMinutes(19).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()),
+            Row.of("5", "2", "300", DATE_TIME.plusMinutes(42).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()));
+
+    wxGroupEvent.select(
+        $("wxGroupId"),
+        $("timestamp").as("TO_TIMESTAMP(FROM_UNIXTIME(timestamp))")
+    ).execute().print();
   }
 }
